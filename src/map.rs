@@ -8,6 +8,33 @@ use std::{
 use hashbrown::HashMap;
 use parking_lot::{RwLock, const_rwlock};
 
+use crate::{Symbol, pool::Pool};
+
+/// A marker trait for types that can be internalized.
+///
+/// This is a sealed trait, it cannot be implemented outside of the current crate.
+///
+/// It is implemented for all types that implement [`Into<String>`] and [`Borrow<str>`].
+/// It is also implemented for all symbol types to allow efficient sharing of symbols between pools.
+pub trait Internalize: Borrow<str> {
+    #[doc(hidden)]
+    fn internalize(self) -> &'static str;
+}
+
+impl<S: Into<String> + Borrow<str>> Internalize for S {
+    fn internalize(self) -> &'static str {
+        let st: String = self.into();
+
+        st.leak()
+    }
+}
+
+impl<P: Pool> Internalize for Symbol<P> {
+    fn internalize(self) -> &'static str {
+        self.as_str()
+    }
+}
+
 pub struct InternMap<S = RandomState> {
     counter: AtomicU32,
     map: RwLock<(
@@ -48,15 +75,13 @@ impl<S: BuildHasher> InternMap<S> {
         map.0.insert(val, key);
     }
 
-    pub fn internalize<V: Borrow<str> + Into<String>>(&self, st: V) -> NonZeroU32 {
+    pub fn internalize<V: Internalize>(&self, st: V) -> NonZeroU32 {
         let map = self.map.read();
 
         if let Some(key) = map.0.get(st.borrow()) {
             *key
         } else {
-            let alloc: String = st.into();
-
-            let val = alloc.leak();
+            let val = st.internalize();
 
             let key = self
                 .counter

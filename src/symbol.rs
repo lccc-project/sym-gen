@@ -5,7 +5,7 @@ use std::{
     ops::Deref,
 };
 
-use crate::pool::Pool;
+use crate::{map::Internalize, pool::Pool};
 
 pub struct Symbol<P>(NonZeroU32, PhantomData<P>);
 
@@ -30,7 +30,7 @@ impl<P> Symbol<P> {
         Self(val, PhantomData)
     }
 
-    pub fn intern<S: Borrow<str> + Into<String>>(val: S) -> Self
+    pub fn intern<S: Internalize>(val: S) -> Self
     where
         P: Pool,
     {
