@@ -1,0 +1,8 @@
+[package]
+name = "sym-gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hashbrown = "0.15.2"
+parking_lot = "0.12.3"
