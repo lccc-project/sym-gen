@@ -7,5 +7,5 @@ impl<T> TyOrDefault for (T,) {
 }
 
 impl<T, U> TyOrDefault for (T, U) {
-    type Type = U;
+    type Type = T;
 }

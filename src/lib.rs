@@ -17,7 +17,7 @@ macro_rules! def_pool {
     {
         $vis:vis struct $pool_name:ident $(($init_hasher_expr:expr))? {
             $(type Hasher = $hasher_ty:ty;)?
-            $(const $sym_name:ident = $sym_token:tt;)*
+            $(const $sym_name:ident $(= $sym_token:tt)?;)*
         }
     } => {
         $vis struct $pool_name;
@@ -47,7 +47,7 @@ macro_rules! def_pool {
                         #[allow(unused_mut)]
                         let mut map = basic_init_fn();
 
-                        $(map.insert_mut(unsafe { $crate::_std_export::num::NonZeroU32::new_unchecked(${index()} + 1) }, $crate::def_pool!(@ $sym_token));)*
+                        $(map.insert_mut(unsafe { $crate::_std_export::num::NonZeroU32::new_unchecked(${index()} + 1) }, $crate::def_pool!(@ $($sym_token,)? sym_name));)*
 
                         map
                     })
@@ -58,6 +58,14 @@ macro_rules! def_pool {
         $vis type Symbol = $crate::symbol::Symbol<$pool_name>;
     };
 
+    {@ $token:tt , $_ignored:tt} => {
+        $crate::_std_export::stringify!($token)
+    };
+
+    {@ -$literal:literal} => {
+        $crate::_std_export::concat!("-", $crate::_std_export::stringify!($literal))
+    };
+
     {@ $literal:literal} => {
         $literal
     };
@@ -65,6 +73,8 @@ macro_rules! def_pool {
     {@ $token:tt} => {
         $crate::_std_export::stringify!($token)
     };
+
+
 }
 
 #[cfg(test)]
